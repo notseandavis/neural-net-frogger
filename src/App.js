@@ -5,7 +5,7 @@ import 'bootstrap/dist/css/bootstrap-theme.css';
 import RenderGame from './Game/RenderGame';
 import gameStart from './gamestart'
 import { Button } from 'react-bootstrap'
-import NeuralNet from './neuralnet';
+import NeuralNet from './recursivenueralnet';
 import _ from 'lodash';
 
 class App extends Component {
