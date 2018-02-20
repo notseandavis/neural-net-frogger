@@ -5,7 +5,7 @@ import 'bootstrap/dist/css/bootstrap-theme.css';
 import RenderGame from './Game/RenderGame';
 import gameStart from './gamestart'
 import { Button } from 'react-bootstrap'
-import NeuralNet from './recursiveinputneuralnet';
+import NeuralNode from './neuralnode';
 import _ from 'lodash';
 
 class App extends Component {
@@ -28,7 +28,7 @@ class App extends Component {
     this.startNeuralNetGame = this.startNeuralNetGame.bind(this);
     this.increaseSpeed = this.increaseSpeed.bind(this)
     this.decreaseSpeed = this.decreaseSpeed.bind(this)
-    this.nn = new NeuralNet(2);
+    this.nn = new NeuralNode(2);
   }
 
   isGameOver(game, jumping) {
