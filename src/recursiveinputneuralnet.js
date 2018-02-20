@@ -1,18 +1,11 @@
+import _ from 'lodash';
+
 export default class NeuralNet {
+    constructor(nInputs) {
+        this.weights = this.generateInputs(nInputs);
+    }
 
-    weights = {
-        i1_h1: 0,
-        i2_h1: 0,
-        bias_h1: 0,
-        i1_h2: 0,
-        i2_h2: 0,
-        bias_h2: 0,
-        h1_o1: 0,
-        h2_o1: 0,
-        bias_o1: 0
-    };
-
-    nWeights = generateInputs
+    weights = []
     
     generateInput(n, thisN) {
         let input = {
@@ -36,7 +29,7 @@ export default class NeuralNet {
             i: []
         }
         _.times(n, i => {
-            weights.i.push(generateInput(n, i))
+            weights.i.push(this.generateInput(n, i))
 
             weights.o.weights.push(0)
         });
@@ -52,16 +45,16 @@ export default class NeuralNet {
     }
     
     applyTrainUpdate(weightDeltas) {
-        _.each(weightDelta.o.weights, (w, i) => {
-             this.nWeights.o.weights[i] += w;
+        _.each(weightDeltas.o.weights, (w, i) => {
+             this.weights.o.weights[i] += w;
         }) 
-        this.nWeights.o.bias += weightDeltas.o.bias
+        this.weights.o.bias += weightDeltas.o.bias
 
         _.each(weightDeltas.i, (input, i) => {
             _.each(input.weights, (weight, ii) => {
-                this.nWeights.i[i].weights[ii] += weight
+                this.weights.i[i].weights[ii] += weight
             })
-            this.nWeights.i[i].bias += input.bias
+            this.weights.i[i].bias += input.bias
         }) 
 
     }
@@ -75,22 +68,22 @@ export default class NeuralNet {
         
         _.each(inputs, (input, i) => {
             let total = 0;
-            let thisWeights = this.nWeights.i[i].weights;
+            let thisWeights = this.weights.i[i].weights;
 
             _.each(thisWeights, (thisWeight, ii) => {
-                total = total + thisWeight * input;
+                total += thisWeight * input;
             })
             
-            total = total + this.nWeights.i[i].bias;
+            total += this.weights.i[i].bias;
             inputTotals.push(total);
-            sTotal = this.sigmoid(total);
+            let sTotal = this.sigmoid(total);
             sInputTotals.push(sTotal);
         })
 
         let out = 0;
 
         _.each(inputTotals, (thisTotal, i) => {
-            out = out + this.nWeights.o.weights[i] * thisTotal
+            out = out + this.weights.o.weights[i] * thisTotal
         })
         let sOut = this.sigmoid(out);
 
@@ -106,7 +99,7 @@ export default class NeuralNet {
         _.times(inputs.length, i => {
             weightDelta.o.weights[i] += sInputTotals[i] * o1_delta
 
-            let thisDelta = o1_delta * this.sigmoidDerivative(inputTotals)
+            const thisDelta = o1_delta * this.sigmoidDerivative(inputTotals[i])
             _.each(inputs, (input, ii) => {
                 weightDelta.i[i].weights[ii] += input * thisDelta
             })
@@ -123,22 +116,23 @@ export default class NeuralNet {
         
         _.each(inputs, (input, i) => {
             let total = 0;
-            let thisWeights = this.nWeights.i[i].weights;
+            let thisWeights = this.weights.i[i].weights;
 
             _.each(thisWeights, (thisWeight, ii) => {
-                total = total + thisWeight * input;
+                total += thisWeight * input;
             })
             
-            total = total + this.nWeights.i[i].bias;
-            sTotal = this.sigmoid(total);
+            total += this.weights.i[i].bias;
+            let sTotal = this.sigmoid(total);
             inputTotals.push(sTotal);
         })
 
         let out = 0;
 
         _.each(inputTotals, (thisTotal, i) => {
-            out = out + this.nWeights.o.weights[i] * thisTotal
+            out += this.weights.o.weights[i] * thisTotal
         })
+        out += this.weights.o.bias;
         let sOut = this.sigmoid(out);
 
         return sOut;
