@@ -266,8 +266,8 @@ class App extends Component {
             <p>Press W key to jump.</p>
             <p>Score: {this.state.score}</p>
             <p>Top Score: {this.state.topScore}</p>
-            <p>Weights:
-            <textarea class="form-control" id="exampleFormControlTextarea1" rows="20">{JSON.stringify(this.nn.weights, null, 2)}</textarea></p>
+            {/* <p>Weights:
+            <textarea class="form-control" id="exampleFormControlTextarea1" rows="20">{JSON.stringify(this.nn.weights, null, 2)}</textarea></p> */}
             {this.state.neuralNetRunning && <p>Generation: {this.state.generation}</p>}
           </div>
           <div className="col-sm-6">
