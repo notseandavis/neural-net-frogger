@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faTruckPickup } from '@fortawesome/free-solid-svg-icons'
 
 class Row extends Component {
   
@@ -8,10 +10,10 @@ class Row extends Component {
         <div className="row">
             {this.props.row.map((node, i) => {
                 if (i < 12) {
-                    const cn = node === 1 ? 'bg-danger col-xs-1' : 'col-xs-1';
+                    const cn = node === 1 ? 'col-xs-1' : 'col-xs-1';
                     return (
                         <div className={cn} key={i}>
-                            {node}
+                            {node === 1 ? <FontAwesomeIcon size='3x' icon={faTruckPickup} /> : null}
                         </div>
                     );
                 } else {

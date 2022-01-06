@@ -28,9 +28,9 @@
 }
 
 .player {
-  margin-top: -20px;
-  background-color: #68ec31a3;
+  margin-top: -42px;
+  color: #68ec31a3;
 }
 .player.jumping {
-  margin-top: -40px;
+  margin-top: -80px;
 }

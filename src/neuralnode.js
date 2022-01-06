@@ -16,9 +16,7 @@ export default class NeuralNode {
         _.times(n, i => {
             input.weights.push(0);
         })
-
         return input;
-
     }
 
     generateInputs(n) {
@@ -57,6 +55,7 @@ export default class NeuralNode {
             })
             this.weights.i[i].bias += input.bias
         })
+        console.log(JSON.stringify(this.weights, null, 2));
     }
 
     train = function(inputs, expectedOutput) {
@@ -157,10 +156,9 @@ export default class NeuralNode {
     
     shouldJump = function(a, b) {
         const decision = this.nn(a, b);
-
-        const shouldJump = decision > 0.9;
-
         console.log(decision);
+        const shouldJump = decision > 0.7;
+
         
 
         return shouldJump;
