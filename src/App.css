@@ -30,7 +30,22 @@
 .player {
   margin-top: -42px;
   color: #68ec31a3;
+  transition: 0.07s;
 }
 .player.jumping {
   margin-top: -80px;
 }
+.game {
+  border: 3px solid
+}
+.road {
+  height: 40px;
+}
+/* 
+.gamerunning .road svg {
+  position: relative;
+  left: 100px;
+}
+.gamerunning .road svg {
+  transition: 0.3s;
+} */

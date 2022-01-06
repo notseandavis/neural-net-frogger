@@ -10,9 +10,8 @@ class Row extends Component {
         <div className="row">
             {this.props.row.map((node, i) => {
                 if (i < 12) {
-                    const cn = node === 1 ? 'col-xs-1' : 'col-xs-1';
                     return (
-                        <div className={cn} key={i}>
+                        <div className={'road col-xs-1'} key={i}>
                             {node === 1 ? <FontAwesomeIcon size='3x' icon={faTruckPickup} /> : null}
                         </div>
                     );

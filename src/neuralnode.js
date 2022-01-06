@@ -1,41 +1,17 @@
-import _ from 'lodash';
+export default class NeuralNet {
 
-export default class NeuralNode {
+    weights = {
+        i1_h1: 0,
+        i2_h1: 0,
+        bias_h1: 0,
+        i1_h2: 0,
+        i2_h2: 0,
+        bias_h2: 0,
+        h1_o1: 0,
+        h2_o1: 0,
+        bias_o1: 0
+    };
     
-    constructor(nInputs) {
-        this.weights = this.generateInputs(nInputs);
-    }
-
-    weights = []
-    
-    generateInput(n, thisN) {
-        let input = {
-            bias: 0,
-            weights: []
-        };
-        _.times(n, i => {
-            input.weights.push(0);
-        })
-        return input;
-    }
-
-    generateInputs(n) {
-        let weights = {
-            o: {
-                bias: 0,
-                weights: []
-            },
-            i: []
-        }
-        _.times(n, i => {
-            weights.i.push(this.generateInput(n, i))
-
-            weights.o.weights.push(0)
-        });
-        return weights;
-    }
-
-
     sigmoid = x => 1 / (1 + Math.exp(-x));
 
     sigmoidDerivative(x) {
@@ -43,98 +19,98 @@ export default class NeuralNode {
         return fx * (1 - fx);
     }
     
-    applyTrainUpdate(weightDeltas) {
-        _.each(weightDeltas.o.weights, (w, i) => {
-             this.weights.o.weights[i] += w;
-        }) 
-        this.weights.o.bias += weightDeltas.o.bias
-
-        _.each(weightDeltas.i, (input, i) => {
-            _.each(input.weights, (weight, ii) => {
-                this.weights.i[i].weights[ii] += weight
-            })
-            this.weights.i[i].bias += input.bias
-        })
-        console.log(JSON.stringify(this.weights, null, 2));
+    applyTrainUpdate(weight_deltas) {
+        Object.keys(this.weights).forEach(key => 
+            this.weights[key] += weight_deltas[key]);
     }
 
-    train = function(inputs, expectedOutput) {
-        let weightDelta = this.generateInputs(inputs.length)
+    train = function(i1, i2, output) {
+        let weightDelta = {
+            i1_h1: 0,
+            i2_h1: 0,
+            bias_h1: 0,
+            i1_h2: 0,
+            i2_h2: 0,
+            bias_h2: 0,
+            h1_o1: 0,
+            h2_o1: 0,
+            bias_o1: 0,
+        };
 
         //this part is 100% identic to forward pass function
-        let sInputTotals = []
-        let inputTotals = []
-        
-        _.each(inputs, (input, i) => {
-            let total = 0;
-            let thisWeights = this.weights.i[i].weights;
+        var h1_input =
+            this.weights.i1_h1 * i1 +
+            this.weights.i2_h1 * i2 +
+            this.weights.bias_h1;
+        var h1 = this.sigmoid(h1_input);
 
-            _.each(thisWeights, (thisWeight, ii) => {
-                total += thisWeight * input;
-            })
-            
-            total += this.weights.i[i].bias;
-            inputTotals.push(total);
-            let sTotal = this.sigmoid(total);
-            sInputTotals.push(sTotal);
-        })
+        var h2_input =
+            this.weights.i1_h2 * i1 +
+            this.weights.i2_h2 * i2 +
+            this.weights.bias_h2;
+        var h2 = this.sigmoid(h2_input);
 
-        let out = 0;
 
-        _.each(inputTotals, (thisTotal, i) => {
-            out = out + this.weights.o.weights[i] * thisTotal
-        })
-        let sOut = this.sigmoid(out);
+        var o1_input =
+            this.weights.h1_o1 * h1 +
+            this.weights.h2_o1 * h2 +
+            this.weights.bias_o1;
+
+        var o1 = this.sigmoid(o1_input);
 
         //learning starts here:
         // we calculate our delta
-        var delta = expectedOutput - sOut;
+        var delta = output - o1;
         //console.log('delta: ' + delta);
         //then we calculate our derivative (and throwing away "2 * " as we can multiply it later)
-        var o1_delta = delta * this.sigmoidDerivative(out);
+        var o1_delta = delta * this.sigmoidDerivative(o1_input);
 
         //and for our equatation w1 * h1 + w2 * h2 we're trying to alter weights first
         
-        _.times(inputs.length, i => {
-            weightDelta.o.weights[i] += sInputTotals[i] * o1_delta
-
-            const thisDelta = o1_delta * this.sigmoidDerivative(inputTotals[i])
-            _.each(inputs, (input, ii) => {
-                weightDelta.i[i].weights[ii] += input * thisDelta
-            })
-            weightDelta.i[i].bias += o1_delta
-
-        })
-        weightDelta.o.bias += o1_delta;
+        weightDelta.h1_o1 += h1 * o1_delta;
+        weightDelta.h2_o1 += h2 * o1_delta;
+        weightDelta.bias_o1 += o1_delta;
+        
+        //and then we're trying to alter our h1 and h2.
+        //but we cannot alter them directly, as they are functions of other weights too
+        //so we need to alter their weights by same approach 
+        
+        var h1_delta = o1_delta * this.sigmoidDerivative(h1_input);
+        var h2_delta = o1_delta * this.sigmoidDerivative(h2_input);
+        
+        weightDelta.i1_h1 += i1 * h1_delta;
+        weightDelta.i2_h1 += i2 * h1_delta;
+        weightDelta.bias_h1 += h1_delta;
+        
+        weightDelta.i1_h2 += i1 * h2_delta;
+        weightDelta.i2_h2 += i2 * h2_delta;
+        weightDelta.bias_h2 += h2_delta;
 
         return this.applyTrainUpdate(weightDelta);
     }
     
-    nn(inputs) {
-        let inputTotals = []
+    nn(i1, i2) {
+        var h1_input =
+            this.weights.i1_h1 * i1 +
+            this.weights.i2_h1 * i2 +
+            this.weights.bias_h1;
+        var h1 = this.sigmoid(h1_input);
+    
+        var h2_input =
+            this.weights.i1_h2 * i1 +
+            this.weights.i2_h2 * i2 +
+            this.weights.bias_h2;
+        var h2 = this.sigmoid(h2_input);
+    
+    
+        var o1_input =
+            this.weights.h1_o1 * h1 +
+            this.weights.h2_o1 * h2 +
+            this.weights.bias_o1;
+    
+        var o1 = this.sigmoid(o1_input);
         
-        _.each(inputs, (input, i) => {
-            let total = 0;
-            let thisWeights = this.weights.i[i].weights;
-
-            _.each(thisWeights, (thisWeight, ii) => {
-                total += thisWeight * input;
-            })
-            
-            total += this.weights.i[i].bias;
-            let sTotal = this.sigmoid(total);
-            inputTotals.push(sTotal);
-        })
-
-        let out = 0;
-
-        _.each(inputTotals, (thisTotal, i) => {
-            out += this.weights.o.weights[i] * thisTotal
-        })
-        out += this.weights.o.bias;
-        let sOut = this.sigmoid(out);
-
-        return sOut;
+        return o1;
     }
 
     // inputs: [number, number]
@@ -156,12 +132,36 @@ export default class NeuralNode {
     
     shouldJump = function(a, b) {
         const decision = this.nn(a, b);
-        console.log(decision);
-        const shouldJump = decision > 0.7;
 
+        const shouldJump = decision > 0.6;
+
+        console.log(decision);
         
 
         return shouldJump;
     }
 }
+
+
+// def think(self, inputs):
+// # Pass inputs through our neural network (our single neuron).
+// return self.__sigmoid(dot(inputs, self.synaptic_weights))
+
+
+// def train(self, training_set_inputs, training_set_outputs, number_of_training_iterations):
+// for iteration in xrange(number_of_training_iterations):
+//     # Pass the training set through our neural network (a single neuron).
+//     output = self.think(training_set_inputs)
+
+//     # Calculate the error (The difference between the desired output
+//     # and the predicted output).
+//     error = training_set_outputs - output
+
+//     # Multiply the error by the input and again by the gradient of the Sigmoid curve.
+//     # This means less confident weights are adjusted more.
+//     # This means inputs, which are zero, do not cause changes to the weights.
+//     adjustment = dot(training_set_inputs.T, error * self.__sigmoid_derivative(output))
+
+//     # Adjust the weights.
+//     self.synaptic_weights += adjustment
 
