@@ -80,7 +80,7 @@ class App extends Component {
         jumping = 2;
       }
       if (this.state.neuralNetRunning && this.state.jumping === 0) {
-        jumping = new NeuralNode(this.state.weights).shouldJump(game[0][0], game[1][0]) ? 1 : 0;
+        jumping = new NeuralNode(this.state.weights).shouldJump(game[0][1], game[1][1]) ? 1 : 0;
       }
 
       game[0].splice(0, 1);
@@ -88,13 +88,10 @@ class App extends Component {
       this.setState({game, jumping, score: this.state.score + 1});
       
       if (this.isGameOver(game, this.state.jumping)) {
-        this.setState({gameOver:true, wonGame: false, topScore: this.state.score + (this.state.neuralNetRunning ? ' (AI)' : '')});
+        this.setState({gameOver:true, wonGame: false, topScore: this.state.score > this.state.topScore ? this.state.score : this.state.topScore});
         
         if (this.state.neuralNetRunning) {
-          let shouldHaveJumped = true;
-          if (this.state.game[0][0] === 1) {
-            shouldHaveJumped = false;
-          }
+          let shouldHaveJumped = jumping > 0 && game[0][0] > 0 ? 0 : 1;
           this.setState({weights: new NeuralNode(this.state.weights).train(game[0][0], game[1][0], shouldHaveJumped)});
           setTimeout(this.resetGameNN(), 3000);
         }
@@ -288,7 +285,7 @@ class App extends Component {
       output: {
         inputWeights: {
           1: this.state.weights.h1_o1,
-          2: this.state.weights.h1_o2
+          2: this.state.weights.h2_o1
         },
         bias: this.state.weights.bias_o1
       }
