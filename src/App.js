@@ -28,7 +28,18 @@ class App extends Component {
       playerRunning: false,
       generation: 0,
       speed: 300,
-      topScore: 0
+      topScore: 0,
+      weights: {
+        i1_h1: 0,
+        i2_h1: 0,
+        bias_h1: 0,
+        i1_h2: 0,
+        i2_h2: 0,
+        bias_h2: 0,
+        h1_o1: 0,
+        h2_o1: 0,
+        bias_o1: 0
+      }
     };
     this.gameMap = _.map(gameStart, _.clone);
 
@@ -36,7 +47,6 @@ class App extends Component {
     this.startNeuralNetGame = this.startNeuralNetGame.bind(this);
     this.increaseSpeed = this.increaseSpeed.bind(this)
     this.decreaseSpeed = this.decreaseSpeed.bind(this)
-    this.nn = new NeuralNode();
   }
 
   isGameOver(game, jumping) {
@@ -62,7 +72,7 @@ class App extends Component {
   }
 
   incrementGame() {
-    if (this.state.game[0].length > 1) {
+    if (this.state.game[0].length > 1 && !this.state.gameOver) {
       let game = this.state.game;
       let jumping = 0;
       // if you are already in the air, stay there
@@ -70,7 +80,7 @@ class App extends Component {
         jumping = 2;
       }
       if (this.state.neuralNetRunning && this.state.jumping === 0) {
-        jumping = this.nn.shouldJump(game[0][1], game[1][1]) ? 1 : 0;
+        jumping = new NeuralNode(this.state.weights).shouldJump(game[0][0], game[1][0]) ? 1 : 0;
       }
 
       game[0].splice(0, 1);
@@ -79,10 +89,14 @@ class App extends Component {
       
       if (this.isGameOver(game, this.state.jumping)) {
         this.setState({gameOver:true, wonGame: false, topScore: this.state.score + (this.state.neuralNetRunning ? ' (AI)' : '')});
-
+        
         if (this.state.neuralNetRunning) {
-          this.nn.train(game[0][0], game[1][0], game[1][0]) === 1 ? 1 : 0;
-          setTimeout(this.resetGameNN(), this.state.speed);
+          let shouldHaveJumped = true;
+          if (this.state.game[0][0] === 1) {
+            shouldHaveJumped = false;
+          }
+          this.setState({weights: new NeuralNode(this.state.weights).train(game[0][0], game[1][0], shouldHaveJumped)});
+          setTimeout(this.resetGameNN(), 3000);
         }
 
       } else {
@@ -256,6 +270,29 @@ class App extends Component {
 
   render() {
     let runningClass = this.state.playerRunning || this.state.neuralNetRunning ? 'gamerunning ' + this.state.speed : '';
+    let weights = {
+      node1: {
+        weights: {
+          1: this.state.weights.i1_h1,
+          2: this.state.weights.i2_h1
+        },
+        bias: this.state.weights.bias_h1
+      },
+      node2: {
+        weights: {
+          1: this.state.weights.i1_h2,
+          2: this.state.weights.i2_h2
+        },
+        bias: this.state.weights.bias_h2
+      },
+      output: {
+        inputWeights: {
+          1: this.state.weights.h1_o1,
+          2: this.state.weights.h1_o2
+        },
+        bias: this.state.weights.bias_o1
+      }
+    }
     return (
       <div className="container">
         <div className="row">
@@ -270,8 +307,6 @@ class App extends Component {
             <p>Press W key to jump.</p>
             <p>Score: {this.state.score}</p>
             <p>Top Score: {this.state.topScore}</p>
-            {/* <p>Weights:
-            <textarea class="form-control" id="exampleFormControlTextarea1" rows="20">{JSON.stringify(this.nn.weights, null, 2)}</textarea></p> */}
             {this.state.neuralNetRunning && <p>Generation: {this.state.generation}</p>}
           </div>
           <div className="col-sm-6">
@@ -316,6 +351,8 @@ class App extends Component {
             </div>
           </div>
         </div>
+        <br/>
+        <p>Weights:<pre>{JSON.stringify(weights, null, 2)}</pre></p>
       </div>
     );
   }
