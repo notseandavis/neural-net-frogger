@@ -6,6 +6,7 @@ import RenderGame from './Game/RenderGame';
 import gameStart from './gamestart'
 import { Button } from 'react-bootstrap'
 import NeuralNode from './neuralnode';
+import NNeuralNodes from './nneuralnodes';
 import _ from 'lodash';
 import ReactDOM from 'react-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -39,7 +40,8 @@ class App extends Component {
         h1_o1: 0,
         h2_o1: 0,
         bias_o1: 0
-      }
+      },
+      newWeights: new NNeuralNodes(2, null).weights
     };
     this.gameMap = _.map(gameStart, _.clone);
 
@@ -76,10 +78,11 @@ class App extends Component {
       let game = this.state.game;
       let jumping = 0;
       // if you are already in the air, stay there
-      if (this.state.jumping === 1) {
+      if (!this.state.neuralNetRunning && this.state.jumping === 1) {
         jumping = 2;
       }
       if (this.state.neuralNetRunning && this.state.jumping === 0) {
+        // jumping = new NNeuralNodes(2, this.state.newWeights).shouldJump(game[0][1], game[1][1]) ? 1 : 0;
         jumping = new NeuralNode(this.state.weights).shouldJump(game[0][1], game[1][1]) ? 1 : 0;
       }
 
@@ -92,6 +95,7 @@ class App extends Component {
         
         if (this.state.neuralNetRunning) {
           let shouldHaveJumped = jumping > 0 && game[0][0] > 0 ? 0 : 1;
+          // this.setState({newWeights: new NNeuralNodes(2, this.state.newWeights).train([game[0][0], game[1][0]], shouldHaveJumped)});
           this.setState({weights: new NeuralNode(this.state.weights).train(game[0][0], game[1][0], shouldHaveJumped)});
           setTimeout(this.resetGameNN(), 3000);
         }
@@ -104,40 +108,6 @@ class App extends Component {
     }
   }
 
-
-  // incrementGameNN2() {
-  //   if (this.state.game[0].length > 1) {
-  //     let game = this.state.game;
-
-  //     game[0].splice(0, 1);
-  //     game[1].splice(0, 1);
-      
-  //     let jumping = 0;
-  //     // if you are already in the air, stay there
-  //     if (this.state.jumping === 1) {
-  //       jumping = 2;
-  //     } else if (this.state.jumping === 0) {
-  //       jumping = this.nn.shouldJump(game[0][1], game[1][1]) ? 1 : 0;
-  //     }
-  //     console.log("jumping: " + jumping);
-
-  //     this.setState({game, jumping, score: this.state.score + 1});
-      
-  //     if (this.isGameOver(game, this.state.jumping)) {
-  //       this.setState({gameOver: true});
-  //       this.nn.train(game[0][0], game[1][0], game[1][0]) === 1 ? 1 : 0;
-        
-  //       console.log('game over');
-
-  //       setTimeout(this.resetGameNN(), 1000);
-        
-  //     } else {
-  //       setTimeout(this.incrementGameNN2.bind(this), this.state.speed);
-  //     }
-  //   } else {
-  //     this.resetGameNN();
-  //   }
-  // }
   resetGameNN() {
     let topScore = this.state.topScore;
     if (this.state.score > this.state.topScore) {
@@ -154,87 +124,6 @@ class App extends Component {
     }, this.incrementGame);
   }
 
-
-  // incrementGameNN2() {
-  //   if (this.state.game[0].length > 1) {
-  //     if (this.state.score > gameStart[0].length) {
-  //       return this.setState({gameOver:true});
-  //     }
-  //     let game = this.state.game;
-  //     let jumping = 0;
-  //     // if you are already in the air, stay there
-  //     if (this.state.jumping === 1) {
-  //       jumping = 2;
-  //     }
-  //     game[0].splice(0, 1);
-  //     game[1].splice(0, 1);
-  //     this.setState({game, jumping, score: this.state.score + 1});
-      
-  //     if (this.isGameOver(game, this.state.jumping)) {
-  //       this.setState({gameOver:true, topScore: this.state.score});
-  //     } else {
-  //       setTimeout(this.incrementGame.bind(this), this.state.speed);
-  //     }
-  //   } else {
-  //     this.setState({gameOver:true, wonGame: true, topScore: this.state.score});
-  //   }
-  // }
-
-
-  // incrementGameNN() {
-  //   let game = this.state.game;
-
-  //   game[0].splice(0, 1);
-  //   game[1].splice(0, 1);
-  //   let score = this.state.score + 1;
-
-
-  //   if (score === gameStart[0].length) {
-  //     console.log('game won)');
-  //     return this.resetGameNN();
-  //   }
-
-  //   const i1 = game[0][1];
-  //   const i2 = game[1][1];
-    
-  //   let jump;
-  //   if (jump === 1) {
-  //     jump = 2;
-  //   } else if (this.state.jumping === 2) {
-  //     jump = 0;
-  //     console.log("ending jump")
-  //   } else if (this.state.jumping === 0) {
-  //     console.log("checking if should jump");
-  //     jump = this.nn.shouldJump([i1, i2]) ? 1 : 0;
-  //   }
-  //   console.log("jump = " + jump)
-    
-  //   const gameOver = this.isGameOver(game, jump);
-
-  //   this.setState({game, score, jump});
-
-
-  //   if (gameOver) {
-  //     let expectedOutput;
-  //     if (jump === 0) {
-  //       expectedOutput = 1;
-  //     } else {
-  //       expectedOutput = 0;
-  //     }
-
-  //     this.nn.train([i1, i2], expectedOutput);
-      
-  //     console.log('game over');
-  //     this.setState({gameOver: true});
-  //     setTimeout(this.resetGameNN(), '100ms');
-      
-  //   } else {
-
-  //     setTimeout(this.incrementGameNN.bind(this), this.state.speed);
-  //   }
-
-
-  // }
 
   componentDidMount() {
     document.addEventListener("keydown", this.handleKeyDown, false);
@@ -348,6 +237,7 @@ class App extends Component {
             </div>
           </div>
         </div>
+        {/* <p>New Weights:<pre>{JSON.stringify(this.state.newWeights, null, 2)}</pre></p> */}
         <br/>
         <p>Weights:<pre>{JSON.stringify(weights, null, 2)}</pre></p>
       </div>

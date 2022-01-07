@@ -1,11 +1,14 @@
 import _ from 'lodash';
+import {add, multiply} from 'mathjs';
 
-export default class NeuralNode {
+export default class NNeuralNodes {
     
-    constructor(nInputs) {
-        this.weights = this.generateInputs(nInputs);
+    constructor(nInputs, weights) {
+        if (!weights) {
+            this.weights = this.generateInputs(nInputs);
+        }
+        else this.weights = weights;
     }
-
     weights = []
     
     generateInput(n, thisN) {
@@ -31,7 +34,7 @@ export default class NeuralNode {
             weights.i.push(this.generateInput(n, i))
 
             weights.o.weights.push(0)
-        });
+        })
         return weights;
     }
 
@@ -45,17 +48,18 @@ export default class NeuralNode {
     
     applyTrainUpdate(weightDeltas) {
         _.each(weightDeltas.o.weights, (w, i) => {
-             this.weights.o.weights[i] += w;
-        }) 
-        this.weights.o.bias += weightDeltas.o.bias
+             this.weights.o.weights[i] = add(this.weights.o.weights[i], w);
+        }, this)
+        this.weights.o.bias = add(this.weights.o.bias, weightDeltas.o.bias)
 
         _.each(weightDeltas.i, (input, i) => {
             _.each(input.weights, (weight, ii) => {
-                this.weights.i[i].weights[ii] += weight
-            })
-            this.weights.i[i].bias += input.bias
-        })
-        console.log(JSON.stringify(this.weights, null, 2));
+                this.weights.i[i].weights[ii] = add(this.weights.i[i].weights[ii], weight)
+            }, this)
+            this.weights.i[i].bias = add(this.weights.i[i].bias, input.bias)
+        }, this)
+        return this.weights;
+        // console.log(JSON.stringify(this.weights, null, 2));
     }
 
     train = function(inputs, expectedOutput) {
@@ -68,22 +72,24 @@ export default class NeuralNode {
         _.each(inputs, (input, i) => {
             let total = 0;
             let thisWeights = this.weights.i[i].weights;
-
-            _.each(thisWeights, (thisWeight, ii) => {
-                total += thisWeight * input;
-            })
             
-            total += this.weights.i[i].bias;
+            _.each(thisWeights, (thisWeight, ii) => {
+                total = add(total, multiply(thisWeight, input));
+            }, this)
+            
+            total = add(total, this.weights.i[i].bias);
+
             inputTotals.push(total);
             let sTotal = this.sigmoid(total);
             sInputTotals.push(sTotal);
-        })
+        }, this)
 
         let out = 0;
 
         _.each(inputTotals, (thisTotal, i) => {
-            out = out + this.weights.o.weights[i] * thisTotal
-        })
+            out = add(multiply(out, this.weights.o.weights[i]), thisTotal)
+        }, this)
+        out = add(out, this.weights.o.bias);
         let sOut = this.sigmoid(out);
 
         //learning starts here:
@@ -94,18 +100,16 @@ export default class NeuralNode {
         var o1_delta = delta * this.sigmoidDerivative(out);
 
         //and for our equatation w1 * h1 + w2 * h2 we're trying to alter weights first
-        
+        weightDelta.o.bias = add(weightDelta.o.bias, o1_delta);
         _.times(inputs.length, i => {
-            weightDelta.o.weights[i] += sInputTotals[i] * o1_delta
+            weightDelta.o.weights[i] = add(weightDelta.o.weights[i], (multiply(sInputTotals[i], o1_delta)));
 
             const thisDelta = o1_delta * this.sigmoidDerivative(inputTotals[i])
             _.each(inputs, (input, ii) => {
-                weightDelta.i[i].weights[ii] += input * thisDelta
-            })
-            weightDelta.i[i].bias += o1_delta
-
-        })
-        weightDelta.o.bias += o1_delta;
+                weightDelta.i[i].weights[ii] = add(weightDelta.i[i].weights[ii], (multiply(input, thisDelta)));
+            }, this)
+            weightDelta.i[i].bias = add(weightDelta.i[i].bias, thisDelta)
+        }, this)
 
         return this.applyTrainUpdate(weightDelta);
     }
@@ -118,48 +122,29 @@ export default class NeuralNode {
             let thisWeights = this.weights.i[i].weights;
 
             _.each(thisWeights, (thisWeight, ii) => {
-                total += thisWeight * input;
-            })
+                total = add(total, multiply(thisWeight, input));
+            }, this)
             
-            total += this.weights.i[i].bias;
+            total = add(total, this.weights.i[i].bias);
             let sTotal = this.sigmoid(total);
             inputTotals.push(sTotal);
-        })
+        }, this)
 
         let out = 0;
 
         _.each(inputTotals, (thisTotal, i) => {
-            out += this.weights.o.weights[i] * thisTotal
-        })
-        out += this.weights.o.bias;
+            out = multiply(add(out, this.weights.o.weights[i]), thisTotal)
+        }, this)
+        out = add(out, this.weights.o.bias);
         let sOut = this.sigmoid(out);
 
         return sOut;
     }
-
-    // inputs: [number, number]
-    // think(inputs) {
-    //     const i = math.matrix(inputs);
-    //     const sw = math.matrix(this.synapticWeights);
-    //     const transposedSw = math.transpose(sw);
-
-    //     console.log(math.size(i));
-    //     console.log(math.size(transposedSw));
-
-
-    //     const multiplied = math.multiply(transposedSw, i); //this.multiplyMatrices(inputs, this.synapticWeights);
-
-    //     const rtn = this.sigmoid(multiplied);
-        
-    //     return rtn;
-    // }
     
     shouldJump = function(a, b) {
         const decision = this.nn(a, b);
         console.log(decision);
-        const shouldJump = decision > 0.7;
-
-        
+        const shouldJump = decision > 0.6;
 
         return shouldJump;
     }
