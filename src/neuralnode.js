@@ -1,16 +1,9 @@
 export default class NeuralNet {
 
-    weights = {
-        i1_h1: 0,
-        i2_h1: 0,
-        bias_h1: 0,
-        i1_h2: 0,
-        i2_h2: 0,
-        bias_h2: 0,
-        h1_o1: 0,
-        h2_o1: 0,
-        bias_o1: 0
-    };
+    constructor(weights) {
+        this.weights = weights;
+    }
+    weights = {};
     
     sigmoid = x => 1 / (1 + Math.exp(-x));
 
@@ -22,6 +15,7 @@ export default class NeuralNet {
     applyTrainUpdate(weight_deltas) {
         Object.keys(this.weights).forEach(key => 
             this.weights[key] += weight_deltas[key]);
+        return this.weights;
     }
 
     train = function(i1, i2, output) {
@@ -66,7 +60,6 @@ export default class NeuralNet {
         var o1_delta = delta * this.sigmoidDerivative(o1_input);
 
         //and for our equatation w1 * h1 + w2 * h2 we're trying to alter weights first
-        
         weightDelta.h1_o1 += h1 * o1_delta;
         weightDelta.h2_o1 += h2 * o1_delta;
         weightDelta.bias_o1 += o1_delta;
@@ -74,7 +67,6 @@ export default class NeuralNet {
         //and then we're trying to alter our h1 and h2.
         //but we cannot alter them directly, as they are functions of other weights too
         //so we need to alter their weights by same approach 
-        
         var h1_delta = o1_delta * this.sigmoidDerivative(h1_input);
         var h2_delta = o1_delta * this.sigmoidDerivative(h2_input);
         
