@@ -125,7 +125,7 @@ export default class NeuralNet {
     shouldJump = function(a, b) {
         const decision = this.nn(a, b);
 
-        const shouldJump = decision > 0.6;
+        const shouldJump = decision > 0.5;
 
         console.log(decision);
         

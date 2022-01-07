@@ -28,7 +28,7 @@ class App extends Component {
       playerRunning: false,
       playerRunning: false,
       generation: 0,
-      speed: 300,
+      speed: 1000,
       topScore: 0,
       weights: {
         i1_h1: 0,
@@ -97,7 +97,7 @@ class App extends Component {
           let shouldHaveJumped = jumping > 0 && game[0][0] > 0 ? 0 : 1;
           // this.setState({newWeights: new NNeuralNodes(2, this.state.newWeights).train([game[0][0], game[1][0]], shouldHaveJumped)});
           this.setState({weights: new NeuralNode(this.state.weights).train(game[0][0], game[1][0], shouldHaveJumped)});
-          setTimeout(this.resetGameNN(), 3000);
+          setTimeout(this.resetGameNN.bind(this), this.state.speed);
         }
 
       } else {
@@ -157,34 +157,39 @@ class App extends Component {
   render() {
     let runningClass = this.state.playerRunning || this.state.neuralNetRunning ? 'gamerunning ' + this.state.speed : '';
     let weights = {
-      node1: {
-        weights: {
-          1: this.state.weights.i1_h1,
-          2: this.state.weights.i2_h1
-        },
-        bias: this.state.weights.bias_h1
-      },
-      node2: {
-        weights: {
-          1: this.state.weights.i1_h2,
-          2: this.state.weights.i2_h2
-        },
-        bias: this.state.weights.bias_h2
-      },
-      output: {
-        inputWeights: {
-          1: this.state.weights.h1_o1,
-          2: this.state.weights.h2_o1
-        },
-        bias: this.state.weights.bias_o1
-      }
+      'Input 1 Weight': this.state.weights.i1_h1,
+      'Input 2 Weight':this.state.weights.i2_h1,
+      'Bias': this.state.weights.bias_h1,
     }
+    // let weights = {
+    //   Input 1 : {
+    //     weights: {
+    //       1: this.state.weights.i1_h1,
+    //       2: this.state.weights.i2_h1
+    //     },
+    //     bias: this.state.weights.bias_h1
+    //   },
+    //   node2: {
+    //     weights: {
+    //       1: this.state.weights.i1_h2,
+    //       2: this.state.weights.i2_h2
+    //     },
+    //     bias: this.state.weights.bias_h2
+    //   },
+    //   output: {
+    //     inputWeights: {
+    //       1: this.state.weights.h1_o1,
+    //       2: this.state.weights.h2_o1
+    //     },
+    //     bias: this.state.weights.bias_o1
+    //   }
+    // }
     return (
       <div className="container">
         <div className="row">
           <div className="col-xs-12">
             <header className="App-header">
-              <h1 className="App-title">Welcome to game.</h1>
+              <h1 className="App-title">Frogger</h1>
             </header>
           </div>
         </div>
@@ -220,9 +225,14 @@ class App extends Component {
             <h2>Neural Net Running...</h2>
           </div>
         </div>}
-        {!this.state.gameOver && !this.state.neuralNetRunning && <div className="row">
+        {this.state.playerRunning && !this.state.neuralNetRunning && <div className="row">
           <div className="col-xs-12">
-            <h2>Frogging it up!</h2>
+            <h2>Player Running</h2>
+          </div>
+        </div>}
+        {!this.state.gameOver && !this.state.playerRunning && !this.state.neuralNetRunning && <div className="row">
+          <div className="col-xs-12">
+            <h2>Stopped</h2>
           </div>
         </div>}
         <div className="row game">
@@ -239,7 +249,7 @@ class App extends Component {
         </div>
         {/* <p>New Weights:<pre>{JSON.stringify(this.state.newWeights, null, 2)}</pre></p> */}
         <br/>
-        <p>Weights:<pre>{JSON.stringify(weights, null, 2)}</pre></p>
+        <p>Weights:<pre className="h3">{JSON.stringify(weights, null, 2)}</pre></p>
       </div>
     );
   }
