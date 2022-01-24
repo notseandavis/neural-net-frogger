@@ -1,56 +1,104 @@
 import { forEach } from "mathjs/lib/type";
 
-function sigmoid (x) {
-    return 1 / (1 + Math.exp(-x));
-} 
-
-function sigmoidDerivative(x) {
-    const fx = this.sigmoid(x);
-    return fx * (1 - fx);
-}
-
-function activation(inputs, weights, bias) {
-    let sum = 0;
-    for (let i = 0; i < inputs.length; i++) {
-        sum += weights[i] * inputs[i]
-    }
-    return sum += bias;
-    return sigmoid(sum);
-}
-
 export default class NNEt {
-    constructor(inputs, nodes, layers) {
+    constructor(inputs, numberOfNodes, numberOfLayers) {
+        // number of inputs
         this.inputs = inputs;
-        this.nodes = [];
+        this.numberOfNodes = numberOfNodes;
+        // horizontal layers
         this.layers = [];
+        
         let i = 0;
-        while (this.layers.length + 1 < inputs) {
+        while (this.layers.length < numberOfLayers) {
             let ii = 0;
             this.layers.push([]);
-            while (this.nodes.length + 1 < nodes) {
-                this.layer[i][ii].push(new Node(inputs));
+            while (this.layers[i].length < numberOfNodes) {
+                if (i === 0) {
+                    // first layer
+                    this.layers[i].push(new Node(inputs));
+                } else {
+                    // middle layer
+                    this.layers[i].push(new Node(numberOfNodes));
+                }
             }
         }
-        this.layers.push([new Node[inputs]]);
+        // output layer
+        this.layers.push([new Node(numberOfNodes)]);
     }
     inputs = 0
+    // nodes live inside a layer
     layers = []
-    train(inputs, delta, output) {
 
+    // todo make this recursive
+    train(inputs, expectedOutput) {
+        let allOutputs = this.activateAllLayers(inputs);
+
+        // start with the delta of the output node
+        let outputDelta = (expectedOutput - allOutputs[this.layers.length - 1][0])
+        let previousLayersDeltas = Array.apply(null, Array(this.layers.length)).map(function () { return []; });
+        // get the delta from the bottom layer, 
+        // and walk backwards through the layers
+        let i = (this.layers.length - 1);
+        while( i >= 0) {
+            for (let ii = (this.layers[i].length - 1); ii >= 0; ii--) {
+                // this layer's input is the previous layer's output, or the original input
+                let thisLayersInput = i > 0 ? allOutputs[i - 1] : inputs;
+                let thisLayersDelta;
+                if (i === this.layers.length - 1) {
+                    // this is the output layer
+                    thisLayersDelta = outputDelta;
+                } else if (i === this.layers.length - 2) {
+                    // this is the layer on top of the output layer
+                    thisLayersDelta = previousLayersDeltas[previousLayersDeltas.length - 1][0]
+                } else {
+                    // this is some other layer
+                    thisLayersDelta = previousLayersDeltas[previousLayersDeltas.length - 1][ii]
+                }
+                let nextLayersDelta = this.layers[i][ii].train(thisLayersInput, thisLayersDelta);
+                previousLayersDeltas[i].push(nextLayersDelta)
+            }
+            i--;
+        }
+    }
+
+    activateAllLayers(inputs) {
+        let layerInputs = inputs;
+        let layerOutputs = [];
+        this.layers.forEach((layer, i) => {
+            layerOutputs.push([]);
+            layer.forEach((node) => {
+                layerOutputs[i].push(node.fire(layerInputs));
+            });
+            // inputs for the next layer are outputs from this layer
+            layerInputs = layerOutputs[i];
+        });
+        // final layer has only one output
+        return layerOutputs;
+    }
+    fire(inputs) {
+        let allOutputs = this.activateAllLayers(inputs);
+
+        // return the final output layer
+        return allOutputs[this.layers.length - 1][0]
     }
 }
 
 class Node {
     constructor(inputs) {
+        // number of inputs
         this.inputs = inputs;
-        this.weights = [];
+        // initialize all weights to 0
+        this.weights = Array.apply(null, Array(inputs)).map(function () { return 0; })
         this.bias = 0;
     }
+    inputs = [];
 
-    train(inputs, expectedOutput) {
-        let activatedOutput = activation(inputs, this.weights, this.bias)
+    
 
-        let delta = (expectedOutput - sigmoid(activatedOutput)) * sigmoidDerivative(activatedOutput);
+    train(inputs, correction) {
+        let actualOutput = activation(inputs, this.weights, this.bias)
+
+        let delta = (correction * sigmoidDerivative(actualOutput));
         
         for (let i = 0; i < inputs.length; i++) {
             this.weights[i] += inputs[i] * delta;
@@ -62,161 +110,40 @@ class Node {
         if (inputs.length > this.weights.length) {
             throw new Error("too many inputs");
         }
-        let sum = activaton(inputs, this.weights, this.bias)
+        let sum = activation(inputs, this.weights, this.bias)
         return sigmoid(sum)
     }
 }
 
-
-export default class NeuralNet {
-
-    constructor(weights) {
-        this.weights = weights;
-    }
-    weights = {};
-
-    applyTrainUpdate(weight_deltas) {
-        Object.keys(this.weights).forEach(key => 
-            this.weights[key] += weight_deltas[key]);
-        return this.weights;
-    }
-
-    train = function(i1, i2, i3, i4, output) {
-        let weightDelta = {
-            i1_h1: 0,
-            i2_h1: 0,
-            bias_h1: 0,
-            i1_h2: 0,
-            i2_h2: 0,
-            bias_h2: 0,
-            h1_o1: 0,
-            h2_o1: 0,
-            bias_o1: 0,
-        };
-
-        //this part is 100% identic to forward pass function
-        var h1_input =
-            this.weights.i1_h1 * i1 +
-            this.weights.i2_h1 * i2 +
-            this.weights.bias_h1;
-        var h1 = this.sigmoid(h1_input);
-
-        var h2_input =
-            this.weights.i1_h2 * i3 +
-            this.weights.i2_h2 * i4 +
-            this.weights.bias_h2;
-        var h2 = this.sigmoid(h2_input);
-
-
-        var o1_input =
-            this.weights.h1_o1 * h1 +
-            this.weights.h2_o1 * h2 +
-            this.weights.bias_o1;
-
-        var o1 = this.sigmoid(o1_input);
-
-        //learning starts here:
-        // we calculate our delta
-        var delta = output - o1;
-        //console.log('delta: ' + delta);
-        //then we calculate our derivative (and throwing away "2 * " as we can multiply it later)
-        var o1_delta = delta * this.sigmoidDerivative(o1_input);
-
-        //and for our equatation w1 * h1 + w2 * h2 we're trying to alter weights first
-        weightDelta.h1_o1 += h1 * o1_delta;
-        weightDelta.h2_o1 += h2 * o1_delta;
-        weightDelta.bias_o1 += o1_delta;
-        
-        //and then we're trying to alter our h1 and h2.
-        //but we cannot alter them directly, as they are functions of other weights too
-        //so we need to alter their weights by same approach 
-        var h1_delta = o1_delta * this.sigmoidDerivative(h1_input);
-        var h2_delta = o1_delta * this.sigmoidDerivative(h2_input);
-        
-        weightDelta.i1_h1 += i1 * h1_delta;
-        weightDelta.i2_h1 += i2 * h1_delta;
-        weightDelta.bias_h1 += h1_delta;
-        
-        weightDelta.i1_h2 += i1 * h2_delta;
-        weightDelta.i2_h2 += i2 * h2_delta;
-        weightDelta.bias_h2 += h2_delta;
-
-        return this.applyTrainUpdate(weightDelta);
-    }
-    
-    nn(i1, i2, i3, i4) {
-        var h1_input =
-            this.weights.i1_h1 * i1 +
-            this.weights.i2_h1 * i2 +
-            this.weights.bias_h1;
-        var h1 = this.sigmoid(h1_input);
-    
-        var h2_input =
-            this.weights.i1_h2 * i3 +
-            this.weights.i2_h2 * i4 +
-            this.weights.bias_h2;
-        var h2 = this.sigmoid(h2_input);
-    
-    
-        var o1_input =
-            this.weights.h1_o1 * h1 +
-            this.weights.h2_o1 * h2 +
-            this.weights.bias_o1;
-    
-        var o1 = this.sigmoid(o1_input);
-        
-        return o1;
-    }
-
-    // inputs: [number, number]
-    // think(inputs) {
-    //     const i = math.matrix(inputs);
-    //     const sw = math.matrix(this.synapticWeights);
-    //     const transposedSw = math.transpose(sw);
-
-    //     console.log(math.size(i));
-    //     console.log(math.size(transposedSw));
-
-
-    //     const multiplied = math.multiply(transposedSw, i); //this.multiplyMatrices(inputs, this.synapticWeights);
-
-    //     const rtn = this.sigmoid(multiplied);
-        
-    //     return rtn;
-    // }
-    
-    shouldJump = function(a, b, c, d) {
-        const decision = this.nn(a, b, c, d);
-
-        const shouldJump = decision > 0.5;
-
-        console.log(decision);
-        
-
-        return shouldJump;
-    }
+function sigmoid(x) {
+    return 1 / (1 + Math.exp(-x));
+} 
+function sigmoidDerivative(x) {
+    const fx = sigmoid(x);
+    return fx * (1 - fx);
 }
 
-
-// def think(self, inputs):
-// # Pass inputs through our neural network (our single neuron).
-// return self.__sigmoid(dot(inputs, self.synaptic_weights))
-
-
-// def train(self, training_set_inputs, training_set_outputs, number_of_training_iterations):
-// for iteration in xrange(number_of_training_iterations):
-//     # Pass the training set through our neural network (a single neuron).
-//     output = self.think(training_set_inputs)
-
-//     # Calculate the error (The difference between the desired output
-//     # and the predicted output).
-//     error = training_set_outputs - output
-
-//     # Multiply the error by the input and again by the gradient of the Sigmoid curve.
-//     # This means less confident weights are adjusted more.
-//     # This means inputs, which are zero, do not cause changes to the weights.
-//     adjustment = dot(training_set_inputs.T, error * self.__sigmoid_derivative(output))
-
-//     # Adjust the weights.
-//     self.synaptic_weights += adjustment
-
+function activation(inputs, weights, bias) {
+    let sum = 0;
+    for (let i = 0; i < inputs.length; i++) {
+        sum += weights[i] * inputs[i]
+    }
+    return sum += bias;
+}
+// class MathHelper {
+//     sigmoid(x) {
+//         return 1 / (1 + Math.exp(-x));
+//     } 
+//     sigmoidDerivative(x) {
+//         const fx = MathHelper.sigmoid(x);
+//         return fx * (1 - fx);
+//     }
+    
+//     activation(inputs, weights, bias) {
+//         let sum = 0;
+//         for (let i = 0; i < inputs.length; i++) {
+//             sum += weights[i] * inputs[i]
+//         }
+//         return sum += bias;
+//     }
+// }
