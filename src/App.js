@@ -31,7 +31,7 @@ class App extends Component {
       topScore: 0,
     };
     this.gameMap = _.map(gameStart, _.clone);
-    this.nnet = new NNet([[2],[2]], 1, 2);
+    this.nnet = new NNet([[2],[2]], 1, 1);
     this.startGame = this.startGame.bind(this);
     this.startNeuralNetGame = this.startNeuralNetGame.bind(this);
     this.increaseSpeed = this.increaseSpeed.bind(this)
@@ -147,34 +147,7 @@ class App extends Component {
 
   render() {
     let runningClass = this.state.playerRunning || this.state.neuralNetRunning ? 'gamerunning ' + this.state.speed : '';
-    // let weights = {
-    //   'Input 1 Weight': this.state.weights.i1_h1,
-    //   'Input 2 Weight':this.state.weights.i2_h1,
-    //   'Bias': this.state.weights.bias_h1,
-    // }
-    let weights = {
-      "Input 1" : {
-        weights: {
-          1: this.state.weights.i1_h1,
-          2: this.state.weights.i2_h1
-        },
-        bias: this.state.weights.bias_h1
-      },
-      "Input 2": {
-        weights: {
-          1: this.state.weights.i1_h2,
-          2: this.state.weights.i2_h2
-        },
-        bias: this.state.weights.bias_h2
-      },
-      output: {
-        inputWeights: {
-          1: this.state.weights.h1_o1,
-          2: this.state.weights.h2_o1
-        },
-        bias: this.state.weights.bias_o1
-      }
-    }
+    
     return (
       <div className="container">
         <div className="row">
@@ -239,7 +212,7 @@ class App extends Component {
           </div>
         </div>
         <br/>
-        <p>Weights:<pre className="h3">{JSON.stringify(this.nnet, null, 2)}</pre></p>
+        <p>Weights:<pre><code>{JSON.stringify(this.nnet.layers, null, 2)}</code></pre></p>
       </div>
     );
   }
