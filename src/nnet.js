@@ -17,13 +17,15 @@ export default class NNEt {
             this.layers.push([]);
             if (i == 0) {
                 // input layer
-                while (this.layers[i].length < inputs) {
-                    this.layers[i].push(new Node(this.inputs));
+                let inputId = 0;
+                while (this.layers[i].length < inputs.length) {
+                    this.layers[i].push(new Node(inputs[inputId][0]));
+                    inputId++;
                 }
             } else if (i === 1) {
                 while (this.layers[i].length < this.numberOfNodes) {
                     // layer on top of input layer, gets the number of input
-                    this.layers[i].push(new Node(this.inputs)); 
+                    this.layers[i].push(new Node(inputs.length)); 
                 }
             } else {
                 // middle layer
@@ -36,7 +38,7 @@ export default class NNEt {
         }
         // output layer
         this.layers.push([]);
-        this.layers[i].push(new Node(this.numberOfLayers == 1 ? this.inputs : this.numberOfNodes)); 
+        this.layers[i].push(new Node(this.numberOfLayers == 1 ? this.inputs.length : this.numberOfNodes)); 
     }
     inputs = 0
     // nodes live inside a layer
@@ -54,7 +56,7 @@ export default class NNEt {
         while( i >= 0) {
             for (let ii = (this.layers[i].length - 1); ii >= 0; ii--) {
                 // this layer's input is the previous layer's output, or the original input
-                let thisLayersInput = i === 0 ? inputs : allOutputs[i - 1];
+                let thisLayersInput = i === 0 ? inputs[ii] : allOutputs[i - 1];
                 let thisLayersDelta;
                 if (i === this.layers.length - 1) {
                     // this is the output layer
@@ -79,12 +81,17 @@ export default class NNEt {
     }
 
     activateAllLayers(inputs) {
-        let layerInputs = inputs;
+        let layerInputs;
         let layerOutputs = [];
         this.layers.forEach((layer, i) => {
             layerOutputs.push([]);
             layer.forEach((node, ii) => {
-                layerOutputs[i].push(node.fire(layerInputs));
+                if (i === 0) {
+                    // send the set of inputs for the input layer
+                    layerOutputs[i].push(node.fire(inputs[ii]));
+                } else {
+                    layerOutputs[i].push(node.fire(layerInputs));
+                }
             });
             // inputs for the next layer are outputs from this layer
             layerInputs = layerOutputs[i];

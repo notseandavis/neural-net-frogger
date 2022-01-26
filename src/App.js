@@ -45,7 +45,7 @@ class App extends Component {
       newWeights: new NNeuralNodes(2, null).weights
     };
     this.gameMap = _.map(gameStart, _.clone);
-    this.nnet = new NNet(4, 5, 5);
+    this.nnet = new NNet([[2],[2]], 1, 2);
     this.startGame = this.startGame.bind(this);
     this.startNeuralNetGame = this.startNeuralNetGame.bind(this);
     this.increaseSpeed = this.increaseSpeed.bind(this)
@@ -85,7 +85,7 @@ class App extends Component {
       if (this.state.neuralNetRunning && this.state.jumping === 0) {
         // jumping = new NNeuralNodes(2, this.state.newWeights).shouldJump(game[0][1], game[1][1]) ? 1 : 0;
         // jumping = new NeuralNode(this.state.weights).shouldJump(game[0][1], game[1][1], game[1][1], game[1][1]) ? 1 : 0;
-        let shouldJump = this.nnet.fire([game[0][1], game[1][1], game[0][2], game[1][2]]);
+        let shouldJump = this.nnet.fire([[game[0][1], game[1][1]], [game[0][2], game[1][2]]]);
         jumping = shouldJump > .6 ? 1 : 0;
 
       }
@@ -101,7 +101,7 @@ class App extends Component {
           let shouldHaveJumped = jumping > 0 && game[0][0] > 0 ? 0 : 1;
           // this.setState({newWeights: new NNeuralNodes(2, this.state.newWeights).train([game[0][0], game[1][0]], shouldHaveJumped)});
           this.setState({weights: new NeuralNode(this.state.weights).train(game[0][0], game[1][0], game[1][1], game[1][1], shouldHaveJumped)});
-          this.nnet.train([game[0][0], game[1][0], game[0][1], game[1][1]], shouldHaveJumped)
+          this.nnet.train([[game[0][0], game[1][0]], [game[0][1], game[1][1]]], shouldHaveJumped)
           setTimeout(this.resetGameNN.bind(this), this.state.speed);
         }
 
