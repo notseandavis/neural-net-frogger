@@ -5,9 +5,7 @@ import 'bootstrap/dist/css/bootstrap-theme.css';
 import RenderGame from './Game/RenderGame';
 import gameStart from './gamestart'
 import { Button } from 'react-bootstrap'
-import NeuralNode from './neuralnode';
 import NNet from './nnet';
-import NNeuralNodes from './nneuralnodes';
 import _ from 'lodash';
 import ReactDOM from 'react-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -31,18 +29,6 @@ class App extends Component {
       generation: 0,
       speed: 1000,
       topScore: 0,
-      weights: {
-        i1_h1: 0,
-        i2_h1: 0,
-        bias_h1: 0,
-        i1_h2: 0,
-        i2_h2: 0,
-        bias_h2: 0,
-        h1_o1: 0,
-        h2_o1: 0,
-        bias_o1: 0
-      },
-      newWeights: new NNeuralNodes(2, null).weights
     };
     this.gameMap = _.map(gameStart, _.clone);
     this.nnet = new NNet([[2],[2]], 1, 2);
@@ -79,12 +65,12 @@ class App extends Component {
       let game = this.state.game;
       let jumping = 0;
       // if you are already in the air, stay there
+      // TODO: figure out how to make this guy plan ahead, only works for humans right now
       if (!this.state.neuralNetRunning && this.state.jumping === 1) {
         jumping = 2;
       }
       if (this.state.neuralNetRunning && this.state.jumping === 0) {
-        // jumping = new NNeuralNodes(2, this.state.newWeights).shouldJump(game[0][1], game[1][1]) ? 1 : 0;
-        // jumping = new NeuralNode(this.state.weights).shouldJump(game[0][1], game[1][1], game[1][1], game[1][1]) ? 1 : 0;
+        // TODO this is ugly
         let shouldJump = this.nnet.fire([[game[0][1], game[1][1]], [game[0][2], game[1][2]]]);
         jumping = shouldJump > .6 ? 1 : 0;
 
@@ -99,8 +85,8 @@ class App extends Component {
         
         if (this.state.neuralNetRunning) {
           let shouldHaveJumped = jumping > 0 && game[0][0] > 0 ? 0 : 1;
-          // this.setState({newWeights: new NNeuralNodes(2, this.state.newWeights).train([game[0][0], game[1][0]], shouldHaveJumped)});
-          this.setState({weights: new NeuralNode(this.state.weights).train(game[0][0], game[1][0], game[1][1], game[1][1], shouldHaveJumped)});
+
+          // TODO this is ugly
           this.nnet.train([[game[0][0], game[1][0]], [game[0][1], game[1][1]]], shouldHaveJumped)
           setTimeout(this.resetGameNN.bind(this), this.state.speed);
         }
@@ -252,7 +238,6 @@ class App extends Component {
             </div>
           </div>
         </div>
-        {/* <p>New Weights:<pre>{JSON.stringify(this.state.newWeights, null, 2)}</pre></p> */}
         <br/>
         <p>Weights:<pre className="h3">{JSON.stringify(this.nnet, null, 2)}</pre></p>
       </div>

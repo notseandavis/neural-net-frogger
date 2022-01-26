@@ -152,20 +152,3 @@ function activation(inputs, weights, bias) {
     }
     return sum += bias;
 }
-// class MathHelper {
-//     sigmoid(x) {
-//         return 1 / (1 + Math.exp(-x));
-//     } 
-//     sigmoidDerivative(x) {
-//         const fx = MathHelper.sigmoid(x);
-//         return fx * (1 - fx);
-//     }
-    
-//     activation(inputs, weights, bias) {
-//         let sum = 0;
-//         for (let i = 0; i < inputs.length; i++) {
-//             sum += weights[i] * inputs[i]
-//         }
-//         return sum += bias;
-//     }
-// }
