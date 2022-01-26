@@ -2,39 +2,51 @@ import { forEach } from "mathjs/lib/type";
 
 export default class NNEt {
     constructor(inputs, numberOfNodes, numberOfLayers) {
+        // if (numberOfNodes < inputs) {
+        //     throw new Error("nodes must be equal or larger than inputs")
+        // }
         // number of inputs
         this.inputs = inputs;
         this.numberOfNodes = numberOfNodes;
+        this.numberOfLayers = numberOfLayers;
         // horizontal layers
         this.layers = [];
         
         let i = 0;
         while (this.layers.length < numberOfLayers) {
-            let ii = 0;
             this.layers.push([]);
-            while (this.layers[i].length < numberOfNodes) {
-                if (i === 0) {
-                    // first layer
-                    this.layers[i].push(new Node(inputs));
-                } else {
-                    // middle layer
-                    this.layers[i].push(new Node(numberOfNodes));
+            if (i == 0) {
+                // input layer
+                while (this.layers[i].length < inputs) {
+                    this.layers[i].push(new Node(this.inputs));
+                }
+            } else if (i === 1) {
+                while (this.layers[i].length < this.numberOfNodes) {
+                    // layer on top of input layer, gets the number of input
+                    this.layers[i].push(new Node(this.inputs)); 
+                }
+            } else {
+                // middle layer
+                while (this.layers[i].length < this.numberOfNodes) {
+                    // layer on top of input layer, gets the number of input
+                    this.layers[i].push(new Node(this.numberOfNodes)); 
                 }
             }
+            i++;
         }
         // output layer
-        this.layers.push([new Node(numberOfNodes)]);
+        this.layers.push([]);
+        this.layers[i].push(new Node(this.numberOfLayers == 1 ? this.inputs : this.numberOfNodes)); 
     }
     inputs = 0
     // nodes live inside a layer
     layers = []
-
+    
     // todo make this recursive
     train(inputs, expectedOutput) {
         let allOutputs = this.activateAllLayers(inputs);
-
+        
         // start with the delta of the output node
-        let outputDelta = (expectedOutput - allOutputs[this.layers.length - 1][0])
         let previousLayersDeltas = Array.apply(null, Array(this.layers.length)).map(function () { return []; });
         // get the delta from the bottom layer, 
         // and walk backwards through the layers
@@ -42,17 +54,22 @@ export default class NNEt {
         while( i >= 0) {
             for (let ii = (this.layers[i].length - 1); ii >= 0; ii--) {
                 // this layer's input is the previous layer's output, or the original input
-                let thisLayersInput = i > 0 ? allOutputs[i - 1] : inputs;
+                let thisLayersInput = i === 0 ? inputs : allOutputs[i - 1];
                 let thisLayersDelta;
                 if (i === this.layers.length - 1) {
                     // this is the output layer
+                    let outputDelta = (expectedOutput - allOutputs[i][0])
                     thisLayersDelta = outputDelta;
+                    console.log("training output layer")
                 } else if (i === this.layers.length - 2) {
-                    // this is the layer on top of the output layer
-                    thisLayersDelta = previousLayersDeltas[previousLayersDeltas.length - 1][0]
+                    // this is the layer on top of the output layer, there is only one node on this layer
+                    thisLayersDelta = previousLayersDeltas[i + 1][0]
+                    console.log("training layer on top of output layer")
                 } else {
-                    // this is some other layer
-                    thisLayersDelta = previousLayersDeltas[previousLayersDeltas.length - 1][ii]
+                    // this is some middle or output layer, add up the previous layers together as they all connect together
+                    thisLayersDelta = 0;
+                    previousLayersDeltas[i + 1].forEach(delta => { thisLayersDelta += delta; });
+                    console.log("training middle or top layer");
                 }
                 let nextLayersDelta = this.layers[i][ii].train(thisLayersInput, thisLayersDelta);
                 previousLayersDeltas[i].push(nextLayersDelta)
@@ -66,7 +83,7 @@ export default class NNEt {
         let layerOutputs = [];
         this.layers.forEach((layer, i) => {
             layerOutputs.push([]);
-            layer.forEach((node) => {
+            layer.forEach((node, ii) => {
                 layerOutputs[i].push(node.fire(layerInputs));
             });
             // inputs for the next layer are outputs from this layer
@@ -92,8 +109,6 @@ class Node {
         this.bias = 0;
     }
     inputs = [];
-
-    
 
     train(inputs, correction) {
         let actualOutput = activation(inputs, this.weights, this.bias)
